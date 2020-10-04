@@ -42,3 +42,29 @@ stages:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
+
+- stage: 'Deploy'
+  displayName: 'Deploy'
+  jobs:
+  - deployment: DeployToAws
+    displayName: 'Deploy To AWS Elastic Beanstalk'
+    pool:
+      vmImage: 'windows-latest'
+    variables:
+      CloudEnv: 'AWS Elastic Beanstalk'
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: BeanstalkDeployApplication@1
+            displayName: 'Deploy to Elastic Beanstalk'
+            inputs:
+              awsCredentials: 'AWS Deployment Service Connection'
+              regionName: 'us-east-1'
+              applicationName: 'customers-web-site'
+              environmentName: 'CustomersWebSite-env'
+              applicationType: 'aspnetCoreWindows'
+              dotnetPublishPath: '$(Pipeline.Workspace)/drop'
